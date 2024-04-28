@@ -1,0 +1,2 @@
+no=com.duu.duurpc.fault.retry.NoRetryStrategy
+fixedInterval=com.duu.duurpc.fault.retry.FixedIntervalRetryStrategy

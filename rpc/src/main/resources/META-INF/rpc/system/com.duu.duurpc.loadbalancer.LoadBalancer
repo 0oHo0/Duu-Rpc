@@ -1,0 +1,3 @@
+consistentHash=com.duu.duurpc.loadbalancer.ConsistentHashLoadBalancer
+random=com.duu.duurpc.loadbalancer.RandomLoadBalancer
+roundRobin=com.duu.duurpc.loadbalancer.RoundRobinLoadBalancer

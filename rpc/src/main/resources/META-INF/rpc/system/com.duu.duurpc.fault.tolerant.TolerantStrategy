@@ -1,0 +1,4 @@
+failBack=com.duu.duurpc.fault.tolerant.FailBackTolerantStrategy
+failFast=com.duu.duurpc.fault.tolerant.FailFastTolerantStrategy
+failOver=com.duu.duurpc.fault.tolerant.FailOverTolerantStrategy
+failSafe=com.duu.duurpc.fault.tolerant.FailSafeTolerantStrategy

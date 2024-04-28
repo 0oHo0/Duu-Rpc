@@ -1,0 +1,2 @@
+etcd=com.duu.duurpc.registry.EtcdRegistry
+zookeeper=com.duu.duurpc.registry.ZooKeeperRegistry

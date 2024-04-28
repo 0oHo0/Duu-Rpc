@@ -1,0 +1,4 @@
+jdk=com.duu.duurpc.serializer.JdkSerializer
+hessian=com.duu.duurpc.serializer.HessianSerializer
+json=com.duu.duurpc.serializer.JsonSerializer
+kryo=com.duu.duurpc.serializer.KryoSerializer
