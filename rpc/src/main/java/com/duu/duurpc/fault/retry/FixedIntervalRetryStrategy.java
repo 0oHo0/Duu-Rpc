@@ -18,7 +18,8 @@ public class FixedIntervalRetryStrategy implements RetryStrategy{
 
     @Override
     public RpcResponse doRetry(Callable<RpcResponse> callable) throws Exception {
-        Retryer<RpcResponse> build = RetryerBuilder.<RpcResponse>newBuilder().withWaitStrategy(WaitStrategies.fixedWait(3, TimeUnit.MILLISECONDS))
+        Retryer<RpcResponse> build = RetryerBuilder.<RpcResponse>newBuilder()
+                .withWaitStrategy(WaitStrategies.fixedWait(3, TimeUnit.MILLISECONDS))
                 .withStopStrategy(StopStrategies.stopAfterAttempt(5))
                 .withRetryListener(new RetryListener() {
                     @Override

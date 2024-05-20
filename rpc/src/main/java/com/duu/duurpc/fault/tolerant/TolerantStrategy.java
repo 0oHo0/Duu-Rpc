@@ -4,6 +4,7 @@ import com.duu.duurpc.model.RpcResponse;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * 容错策略
@@ -13,5 +14,5 @@ import java.util.concurrent.Callable;
  **/
 public interface TolerantStrategy {
 
-    public RpcResponse doTolerant(Map<String, Object> context, Exception e);
+    public RpcResponse doTolerant(Map<String, Object> context, Exception e) throws ExecutionException, InterruptedException;
 }
