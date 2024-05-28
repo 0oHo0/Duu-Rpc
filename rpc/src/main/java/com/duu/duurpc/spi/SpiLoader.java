@@ -8,10 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  * @description: SPI 加载器
@@ -49,7 +46,7 @@ public class SpiLoader {
     /**
      * 动态加载的类列表
      */
-    private static final List<Class<?>> LOAD_CLASS_LIST = Arrays.asList(Serializer.class);
+    private static final List<Class<?>> LOAD_CLASS_LIST = Collections.singletonList(Serializer.class);
 
     /**
      * 加载所有类型
@@ -96,7 +93,6 @@ public class SpiLoader {
      * 加载某个类型
      *
      * @param loadClass
-     * @throws IOException
      */
     public static Map<String, Class<?>> load(Class<?> loadClass) {
         System.out.println("加载类型为 {} 的 SPI"+loadClass.toString());

@@ -35,9 +35,9 @@ public class TcpServerHandler implements Handler<NetSocket> {
                 String methodName = rpcRequest.getMethodName();
                 Class<?>[] parameterTypes = rpcRequest.getParameterTypes();
                 Object[] args = rpcRequest.getArgs();
-                Class<?> aClass = LocalRegistry.get(serviceName);
-                Method method = aClass.getMethod(methodName, parameterTypes);
-                Object result = method.invoke(aClass.newInstance(), args);
+                Class<?> implClass = LocalRegistry.get(serviceName);
+                Method method = implClass.getMethod(methodName, parameterTypes);
+                Object result = method.invoke(implClass.newInstance(), args);
                 rpcResponse.setData(result);
                 rpcResponse.setDataType(method.getReturnType());
                 rpcResponse.setMessage("ok");

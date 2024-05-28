@@ -21,7 +21,7 @@ public class RandomLoadBalancer implements LoadBalancer {
             return null;
         }
         // 只有 1 个服务，不用随机
-        if (size == 1) {
+        else if (size == 1) {
             return serviceMetaInfoList.get(0);
         }
         return serviceMetaInfoList.get(random.nextInt(size));

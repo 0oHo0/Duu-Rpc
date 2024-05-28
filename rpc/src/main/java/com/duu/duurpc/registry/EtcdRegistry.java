@@ -7,11 +7,16 @@ import cn.hutool.cron.task.Task;
 import cn.hutool.json.JSONUtil;
 import com.duu.duurpc.config.RegistryConfig;
 import com.duu.duurpc.model.ServiceMetaInfo;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.etcd.jetcd.*;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
 import io.vertx.core.impl.ConcurrentHashSet;
 
@@ -37,12 +42,18 @@ public class EtcdRegistry implements Registry {
      * 根节点
      */
     private static final String ETCD_ROOT_PATH = "/rpc/";
+
     /**
      * 本地注册的节点Key集合
      */
     private final Set<String> localRegisterNodeKeySet = new HashSet<>();
 
-    private final RegistryServiceCache registryServiceCache = new RegistryServiceCache();
+    // private final RegistryServiceCache registryServiceCache = new RegistryServiceCache();
+
+    private final Cache<String, List<ServiceMetaInfo>> registryServiceCache = Caffeine. newBuilder()
+            .maximumSize(100)
+            .expireAfterWrite(Duration.ofDays(1))
+            .build();
 
     private final Set<String> watchingKeySet = new ConcurrentHashSet<>();
 
@@ -52,30 +63,50 @@ public class EtcdRegistry implements Registry {
         Long timeout = registryConfig.getTimeout();
         client = Client.builder().endpoints(address).connectTimeout(Duration.ofMillis(timeout)).build();
         kvClient = client.getKVClient();
+        ByteSequence prefixSeq = ByteSequence.from(ETCD_ROOT_PATH, StandardCharsets.UTF_8);
+        client.getWatchClient().watch(prefixSeq, WatchOption.builder().isPrefix(true).build(),response->{
+            for (WatchEvent event : response.getEvents()) {
+                switch (event.getEventType()) {
+                    case DELETE:
+                    case PUT:
+                    case UNRECOGNIZED:
+                    default:
+                        registryServiceCache.invalidateAll();
+                        break;
+                }
+            }
+        });
         heartBeat();
     }
 
-    @Override
+    /**
+     * 注册服务到ETCD
+     *
+     * @param serviceMetaInfo 服务元数据信息，包含服务节点的关键信息
+     * @throws RuntimeException 如果注册过程中发生中断或执行异常
+     */
     public void registry(ServiceMetaInfo serviceMetaInfo) {
+        // 获取Lease客户端
         Lease leaseClient = client.getLeaseClient();
         long leaseId = 0;
         try {
+            // 申请一个持续300秒的租约
             leaseId = leaseClient.grant(300).get().getID();
-
-
+            // 构造注册键和值，值为服务元信息的JSON字符串
             String registerKey = ETCD_ROOT_PATH + serviceMetaInfo.getServiceNodeKey();
             ByteSequence key = ByteSequence.from(registerKey, StandardCharsets.UTF_8);
             ByteSequence value = ByteSequence.from(JSONUtil.toJsonStr(serviceMetaInfo), StandardCharsets.UTF_8);
-
+            // 使用租约设置键值对
             PutOption putOption = PutOption.builder().withLeaseId(leaseId).build();
             kvClient.put(key, value, putOption).get();
-
-            //添加到本地缓存
+            // 将注册键添加到本地缓存
             localRegisterNodeKeySet.add(registerKey);
         } catch (InterruptedException | ExecutionException e) {
+            // 中断或执行异常，抛出运行时异常
             throw new RuntimeException(e);
         }
     }
+
 
     @Override
     public void unRegistry(ServiceMetaInfo serviceMetaInfo) throws ExecutionException, InterruptedException {
@@ -87,7 +118,8 @@ public class EtcdRegistry implements Registry {
 
     @Override
     public List<ServiceMetaInfo> serviceDiscovery(String serviceKey) throws ExecutionException, InterruptedException {
-        List<ServiceMetaInfo> serviceMetaInfoList = registryServiceCache.readCache();
+        //List<ServiceMetaInfo> serviceMetaInfoList = registryServiceCache.readCache();
+        List<ServiceMetaInfo> serviceMetaInfoList = registryServiceCache.getIfPresent(serviceKey);
         if (serviceMetaInfoList != null) {
             return serviceMetaInfoList;
         }
@@ -100,7 +132,8 @@ public class EtcdRegistry implements Registry {
             String value = key.getValue().toString();
             return JSONUtil.toBean(value, ServiceMetaInfo.class);
         }).collect(Collectors.toList());
-        registryServiceCache.writeCache(serviceMetaInfoList);
+        registryServiceCache.put(serviceKey, serviceMetaInfoList);
+        //registryServiceCache.writeCache(serviceMetaInfoList);
         return serviceMetaInfoList;
     }
 
@@ -148,6 +181,8 @@ public class EtcdRegistry implements Registry {
 
     @Override
     public void watch(String serviceNodeKey) {
+        String[] split = serviceNodeKey.split("/");
+        String serviceKey = split[0];
         Watch watchClient = client.getWatchClient();
         boolean add = watchingKeySet.add(serviceNodeKey);
         if (add) {
@@ -156,7 +191,7 @@ public class EtcdRegistry implements Registry {
                 for (WatchEvent event : response.getEvents()) {
                     switch (event.getEventType()) {
                         case DELETE:
-                            registryServiceCache.clearCache();
+                            registryServiceCache.invalidate(serviceKey);
                             break;
                         case PUT:
                         case UNRECOGNIZED:

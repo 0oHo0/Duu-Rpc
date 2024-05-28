@@ -1,0 +1,6 @@
+rpc:
+  name: duu
+  serverPort: 8082
+  registryConfig:
+    registry: etcd
+    address: http://localhost:2379

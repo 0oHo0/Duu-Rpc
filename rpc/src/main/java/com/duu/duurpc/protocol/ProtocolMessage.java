@@ -66,6 +66,4 @@ public class ProtocolMessage<E> {
          */
         private int bodyLength;
     }
-
-
 }

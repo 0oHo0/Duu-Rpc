@@ -1,0 +1,6 @@
+rpc:
+  name: "rpc-server"
+  version: "1.0.0"
+  severPort: 8888
+duu:
+  name: "duu-server"

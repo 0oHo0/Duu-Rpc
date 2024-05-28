@@ -8,7 +8,6 @@ import java.util.concurrent.Callable;
  * @description: 不重试
  * @author: duu
  * @date: 2024/3/27 20:31
-
  **/
 public class NoRetryStrategy implements RetryStrategy {
 
@@ -19,6 +18,7 @@ public class NoRetryStrategy implements RetryStrategy {
      * @return
      * @throws Exception
      */
+    @Override
     public RpcResponse doRetry(Callable<RpcResponse> callable) throws Exception {
         return callable.call();
     }

@@ -13,7 +13,7 @@ public class RegistryFactory {
      */
     private static final Registry DEFAULT_REGISTRY = new EtcdRegistry();
 
-    /*
+    /**
      * @description:获取实例
      * @author: duu
      * @date: 2024/3/23 16:58
